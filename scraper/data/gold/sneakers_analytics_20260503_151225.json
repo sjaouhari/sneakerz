@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-05-03T15:12:25.503668",
+  "source_layer": "gold",
+  "stats": {
+    "total_sneakers": 43,
+    "total_with_margin": 0,
+    "top_brands": {
+      "Nike": 10,
+      "Adidas": 9,
+      "New Balance": 9,
+      "Asics": 6,
+      "Jordan": 4,
+      "Salomon": 2,
+      "Converse": 2,
+      "Puma": 1
+    }
+  },
+  "top_margins": [],
+  "all_margins": []
+}
