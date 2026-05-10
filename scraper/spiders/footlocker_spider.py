@@ -1,81 +1,79 @@
-import scrapy
-import re
+import requests
+import json
+import os
+import time
 from datetime import datetime
 
-class FootlockerSpider(scrapy.Spider):
-    name = "footlocker"
-    base_url = "https://www.footlocker.fr/fr/category/chaussures.html?start={}&size=48"
-
-    custom_settings = {
-        'DOWNLOAD_DELAY': 2,
-        'RANDOMIZE_DOWNLOAD_DELAY': True,
-        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+def scrape_footlocker(max_pages=10):
+    """Scrape Footlocker via leur API interne"""
+    
+    os.makedirs('data/bronze', exist_ok=True)
+    
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+        'Referer': 'https://www.footlocker.fr/',
+        'x-fl-request-id': 'sneakerz-project',
     }
-
-    async def start(self):
-        for start in range(0, 200, 48):
-            yield scrapy.Request(
-                url=self.base_url.format(start),
-                callback=self.parse
-            )
-
-    def extract_info_from_url(self, url):
-        """Extrait nom et marque depuis l'URL du produit"""
-        try:
-            # URL: /fr/product/nike-air-max-tuned-1-homme-chaussures/314206535404.html
-            slug = url.split('/product/')[-1].split('/')[0]
-            parts = slug.split('-')
-            
-            brands = ['nike', 'adidas', 'jordan', 'new-balance', 'puma', 
-                     'reebok', 'asics', 'converse', 'vans', 'salomon',
-                     'new', 'balance']
-            
-            # Détecter la marque
-            brand = parts[0].capitalize()
-            if parts[0] == 'new' and len(parts) > 1 and parts[1] == 'balance':
-                brand = 'New Balance'
-            
-            # Construire le nom propre
-            name = ' '.join(parts).replace('-', ' ').title()
-            # Supprimer "Homme" "Femme" "Chaussures" etc
-            for word in ['Homme', 'Femme', 'Chaussures', 'Primaire', 'College', 
-                        'Maternelle', 'Unisexe']:
-                name = name.replace(f' {word}', '')
-            
-            return brand, name.strip()
-        except:
-            return 'Unknown', 'Unknown'
-
-    def parse(self, response):
-        products = response.css('div.ProductCard, li.product-grid__item, div.product-item')
+    
+    all_products = []
+    
+    print("🕷️ Scraping Footlocker...")
+    
+    for page in range(0, max_pages * 48, 48):
+        url = (f"https://www.footlocker.fr/api/products/search"
+               f"?query=shoes&start={page}&size=48"
+               f"&sort=newArrivals&lang=fr-FR")
         
-        if not products:
-            # Fallback: extraire depuis les liens
-            links = response.css('a[href*="/product/"]')
-            for link in links:
-                url = link.css('::attr(href)').get('')
-                if not url or 'product' not in url:
-                    continue
-                    
-                full_url = "https://www.footlocker.fr" + url if url.startswith('/') else url
-                image = link.css('img::attr(src)').get('')
-                brand, name = self.extract_info_from_url(full_url)
+        try:
+            response = requests.get(url, headers=headers, timeout=15)
+            print(f"  Page {page//48 + 1} — Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                products = data.get('products', [])
                 
-                # Prix depuis data attributes ou texte
-                price = link.css('[data-price]::attr(data-price)').get('')
-                if not price:
-                    price = link.css('.price::text, .ProductPrice::text').get('').strip()
+                if not products:
+                    break
+                    
+                for p in products:
+                    price = p.get('grossPrice', {}).get('value', 0)
+                    sku = p.get('sku', '')
+                    
+                    product = {
+                        'source': 'footlocker',
+                        'name': p.get('name', '').strip(),
+                        'brand': p.get('brand', '').strip(),
+                        'price': float(price) if price else 0,
+                        'currency': 'EUR',
+                        'sku': sku,
+                        'url': f"https://www.footlocker.fr/fr/product/{p.get('url', '')}",
+                        'image': f"https://images.footlocker.com/is/image/FLEU/{sku}?wid=250&hei=250",
+                        'category': p.get('category', ''),
+                        'ingested_at': datetime.now().isoformat(),
+                        'source_layer': 'bronze',
+                    }
+                    all_products.append(product)
+                
+                print(f"  ✅ {len(products)} produits récupérés")
+                time.sleep(1)
+            else:
+                break
+                
+        except Exception as e:
+            print(f"  ❌ Erreur : {e}")
+            break
+    
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    output = f'data/bronze/footlocker_raw_{timestamp}.json'
+    
+    with open(output, 'w', encoding='utf-8') as f:
+        json.dump(all_products, f, ensure_ascii=False, indent=2)
+    
+    print(f"\n✅ {len(all_products)} produits Footlocker → {output}")
+    return all_products
 
-                yield {
-                    'source': 'footlocker',
-                    'name': name,
-                    'brand': brand,
-                    'price': price if price else 'N/A',
-                    'currency': 'EUR',
-                    'url': full_url,
-                    'image': image,
-                    'ingested_at': datetime.now().isoformat(),
-                    'source_layer': 'bronze',
-                }
-
-        self.logger.info(f"Page scrapée : {response.url}")
+if __name__ == "__main__":
+    products = scrape_footlocker(max_pages=12)
+    print(f"\n🎯 Total : {len(products)} produits scrapés !")

@@ -84,6 +84,68 @@ services:
       - ./backend:/app
     networks:
       - sneakerz_network
+    
+    # ── Airflow ───────────────────────────────────────────────────
+  airflow-init:
+    image: apache/airflow:2.9.0
+    container_name: sneakerz_airflow_init
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://sneakerz_user:sneakerz123@postgres:5432/sneakerz
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    command: >
+      bash -c "airflow db init &&
+               airflow users create
+               --username admin
+               --password admin123
+               --firstname Admin
+               --lastname Sneakerz
+               --role Admin
+               --email admin@sneakerz.com"
+    depends_on:
+      - postgres
+    networks:
+      - sneakerz_network
+
+  airflow-webserver:
+    image: apache/airflow:2.9.0
+    container_name: sneakerz_airflow_web
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://sneakerz_user:sneakerz123@postgres:5432/sneakerz
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./scraper:/opt/airflow/scraper    
+      - ./backend:/opt/airflow/backend
+    command: webserver
+    depends_on:
+      - postgres
+      - airflow-init
+    networks:
+      - sneakerz_network
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.0
+    container_name: sneakerz_airflow_scheduler
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://sneakerz_user:sneakerz123@postgres:5432/sneakerz
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./scraper:/opt/airflow/scraper 
+      - ./backend:/opt/airflow/backend
+    command: scheduler
+    depends_on:
+      - postgres
+      - airflow-init
+    networks:
+      - sneakerz_network
 
   # ── React — Frontend ──────────────────────────────────────────
   frontend:

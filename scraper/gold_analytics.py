@@ -37,16 +37,14 @@ def compute_margins(items):
         margin = round(resell_price - retail_price, 2)
         margin_pct = round((margin / retail_price) * 100, 2)
 
+        # Dans compute_margins(), change le nom affiché
         margins.append({
-            'name': item['name'],
+            'name': f"{item['name']}" + (f" — {item['colorway']}" if item.get('colorway') else ''),
             'brand': brand,
             'price_retail': retail_price,
             'price_resell_ebay': resell_price,
             'margin_value': margin,
             'margin_percent': margin_pct,
-            'currency': item.get('currency', 'EUR'),
-            'source_retail': item.get('source'),
-            'url': item.get('url'),
         })
 
     return sorted(margins, key=lambda x: x['margin_value'], reverse=True)

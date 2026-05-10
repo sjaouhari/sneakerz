@@ -1,0 +1,37 @@
+[2026-05-10T15:16:08.003+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2026-05-10T15:16:08.062+0000] {taskinstance.py:2073} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: sneakerz_pipeline.scrape_kickscrew scheduled__2026-05-10T14:00:00+00:00 [queued]>
+[2026-05-10T15:16:08.075+0000] {taskinstance.py:2073} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: sneakerz_pipeline.scrape_kickscrew scheduled__2026-05-10T14:00:00+00:00 [queued]>
+[2026-05-10T15:16:08.076+0000] {taskinstance.py:2303} INFO - Starting attempt 1 of 3
+[2026-05-10T15:16:08.098+0000] {taskinstance.py:2327} INFO - Executing <Task(BashOperator): scrape_kickscrew> on 2026-05-10 14:00:00+00:00
+[2026-05-10T15:16:08.115+0000] {standard_task_runner.py:90} INFO - Running: ['airflow', 'tasks', 'run', 'sneakerz_pipeline', 'scrape_kickscrew', 'scheduled__2026-05-10T14:00:00+00:00', '--job-id', '2', '--raw', '--subdir', 'DAGS_FOLDER/sneakerz_pipeline.py', '--cfg-path', '/tmp/tmpuvk6vfnl']
+[2026-05-10T15:16:08.120+0000] {logging_mixin.py:188} WARNING - /home/airflow/.local/lib/python3.12/site-packages/airflow/task/task_runner/standard_task_runner.py:61 DeprecationWarning: This process (pid=222) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-05-10T15:16:08.121+0000] {standard_task_runner.py:91} INFO - Job 2: Subtask scrape_kickscrew
+[2026-05-10T15:16:08.123+0000] {standard_task_runner.py:63} INFO - Started process 225 to run task
+[2026-05-10T15:16:08.280+0000] {task_command.py:426} INFO - Running <TaskInstance: sneakerz_pipeline.scrape_kickscrew scheduled__2026-05-10T14:00:00+00:00 [running]> on host 253b0be4b1f2
+[2026-05-10T15:16:08.496+0000] {taskinstance.py:2644} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='sneakerz' AIRFLOW_CTX_DAG_ID='sneakerz_pipeline' AIRFLOW_CTX_TASK_ID='scrape_kickscrew' AIRFLOW_CTX_EXECUTION_DATE='2026-05-10T14:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-05-10T14:00:00+00:00'
+[2026-05-10T15:16:08.498+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2026-05-10T15:16:08.528+0000] {subprocess.py:63} INFO - Tmp dir root location: /tmp
+[2026-05-10T15:16:08.531+0000] {subprocess.py:75} INFO - Running command: ['/usr/bin/bash', '-c', '\n        cd /opt/airflow/scraper &&\n        python fix_bronze.py &&\n        echo "✅ KicksCrew scrapé"\n    ']
+[2026-05-10T15:16:08.554+0000] {subprocess.py:86} INFO - Output:
+[2026-05-10T15:16:08.559+0000] {subprocess.py:93} INFO - /usr/bin/bash: line 2: cd: /opt/airflow/scraper: No such file or directory
+[2026-05-10T15:16:08.560+0000] {subprocess.py:97} INFO - Command exited with return code 1
+[2026-05-10T15:16:08.562+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2026-05-10T15:16:08.588+0000] {taskinstance.py:2890} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 465, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 432, in _execute_callable
+    return execute_callable(context=context, **execute_callable_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/baseoperator.py", line 400, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/bash.py", line 243, in execute
+    raise AirflowException(
+airflow.exceptions.AirflowException: Bash command failed. The command returned a non-zero exit code 1.
+[2026-05-10T15:16:08.603+0000] {taskinstance.py:1205} INFO - Marking task as UP_FOR_RETRY. dag_id=sneakerz_pipeline, task_id=scrape_kickscrew, execution_date=20260510T140000, start_date=20260510T151608, end_date=20260510T151608
+[2026-05-10T15:16:08.623+0000] {standard_task_runner.py:110} ERROR - Failed to execute job 2 for task scrape_kickscrew (Bash command failed. The command returned a non-zero exit code 1.; 225)
+[2026-05-10T15:16:08.669+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 1
+[2026-05-10T15:16:08.745+0000] {taskinstance.py:3482} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-05-10T15:16:08.750+0000] {local_task_job_runner.py:222} INFO - ::endgroup::
